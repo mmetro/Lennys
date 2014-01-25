@@ -257,7 +257,7 @@ timer.Create("espentrefresh", 1, 0, function()
 	
 
 	for k, v in pairs(ents.GetAll()) do
-		if playerpos:Distance(v:GetPos()) <= espradius or espradius == 0 then
+		if espradius == 0 or playerpos:Distance(v:GetPos()) <= espradius then
 			sortents(v)
 		end
 	end
@@ -385,7 +385,7 @@ local function esp()
 			local min, max = v:WorldSpaceAABB()
 			local diff = max-min
 			local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
-			realboxesp(min, max, diff, v
+			realboxesp(min, max, diff, v)
 			drawesptext(v:GetName(), pos.x, pos.y-10,  Color(255, 255,0,255 - calctextopactity(v)))
 			--draw.DrawText(v:GetName(), "Default", pos.x, pos.y-10, Color(255, 255,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
 		end
