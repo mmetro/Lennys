@@ -278,7 +278,7 @@ end)
 
 
 -- fuck vectors now.
-local function realboxesp(min, max, diff, ply, special)
+local function realboxesp(min, max, diff, ply)
 	cam.Start3D()
 	
 		--quad bottom
@@ -365,7 +365,7 @@ local function esp()
 			local min, max = v:WorldSpaceAABB()
 			local diff = max-min
 			local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
-			realboxesp(min, max, diff, v, false)
+			realboxesp(min, max, diff, v)
 			drawesptext("[NoN-AnonP]", pos.x, pos.y-20, Color(0, 255, 255, 255 - calctextopactity(v)))
 			--draw.DrawText("[Friend]"..v:GetName(), "Default", pos.x, pos.y-10, Color(0,255,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
 		end
@@ -374,7 +374,7 @@ local function esp()
 		if v:IsValid() then
 			local min, max = v:WorldSpaceAABB()
 			local diff = max-min
-			realboxesp(min, max, diff, v, false)
+			realboxesp(min, max, diff, v)
 			local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
 			drawesptext("[NPC]"..v:GetClass(), pos.x, pos.y-10, Color(0,255,0,255 - calctextopactity(v)))
 			--draw.DrawText("[NPC]" ..v:GetClass(), "Default", pos.x, pos.y-10, Color(255,0,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
@@ -385,7 +385,7 @@ local function esp()
 			local min, max = v:WorldSpaceAABB()
 			local diff = max-min
 			local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
-			realboxesp(min, max, diff, v, false)
+			realboxesp(min, max, diff, v
 			drawesptext(v:GetName(), pos.x, pos.y-10,  Color(255, 255,0,255 - calctextopactity(v)))
 			--draw.DrawText(v:GetName(), "Default", pos.x, pos.y-10, Color(255, 255,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
 		end
@@ -395,7 +395,7 @@ local function esp()
 			local min, max = v:WorldSpaceAABB()
 			local diff = max-min
 			local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
-			realboxesp(min, max, diff, v, true)
+			realboxesp(min, max, diff, v)
 			drawesptext("["..v:GetNWString("usergroup").."]", pos.x, pos.y-20, Color(255, 0,0,255 - calctextopactity(v)))
 			drawesptext(v:GetName(), pos.x, pos.y-10, Color(255, 255,0,255 - calctextopactity(v)))
 			--draw.DrawText("[Admin]"..v:GetName(), "Default", pos.x, pos.y-10, Color(255,0,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
@@ -417,7 +417,7 @@ local function esp()
 				local min, max = v:WorldSpaceAABB()
 				local diff = max-min
 				local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
-				realboxesp(min, max, diff, v, false)
+				realboxesp(min, max, diff, v)
 				drawesptext(v:GetClass(), pos.x, pos.y-10, Color(0 ,255, 0,255 - calctextopactity(v)))
 				--draw.DrawText(v:GetClass(), "Default", pos.x, pos.y-10, Color(0,255,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
 				if v:GetClass() == "spawned_money" then
