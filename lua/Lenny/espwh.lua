@@ -14,11 +14,9 @@ Credit to the author must be given when using/sharing this work or derivative wo
 CreateClientConVar("lenny_wh_radius", 750)
 CreateClientConVar("lenny_wh", 0)
 CreateClientConVar("lenny_wh_type",0)
-CreateClientConVar("lenny_wh_noprops", 0)
 
 local radius = GetConVarNumber("lenny_wh_radius")
 local whtype = GetConVarNumber("lenny_wh_type")
-local noprops = GetConVarNumber("lenny_wh_noprops")
 
 local plys = {}
 local props = {}
@@ -26,7 +24,6 @@ local trackents = { -- Set Default entities here, lenny_ents to add while you're
 "spawned_money",
 "spawned_shipment",
 "spawned_weapon",
-"money_printer",
 "weapon_ttt_knife",
 "weapon_ttt_c4",
 "npc_tripmine"
@@ -115,7 +112,7 @@ timer.Create("entrefresh", 1, 0, function()
 	for k, v in pairs(ents.FindInSphere(LocalPlayer():GetPos(), radius)) do
 		if (v:IsPlayer() and !(LocalPlayer() == v)) or v:IsNPC() then
 			table.insert(plys, v)
-		elseif v:GetClass() == "prop_physics" and not noprops then
+		elseif v:GetClass() == "prop_physics" then
 			table.insert(props, v)
 		end
 	end
@@ -227,7 +224,8 @@ local espents = {}
 --same reason as in the wh
 
 local function sortents(ent)
-	if (ent:IsPlayer() and LocalPlayer() != ent) then
+	if (ent:IsPlayer() and LocalPlayer() != ent and ent:Health() > 0) then
+		print(ent:SteamID64())
 		if ent:GetFriendStatus() == "friend" then
 			table.insert(espfriends, ent)
 		elseif table.HasValue(nonanonp, ent:SteamID64()) then
@@ -253,23 +251,22 @@ timer.Create("espentrefresh", 1, 0, function()
 	espfriends = {}
 
 	espents = {}
+	playerpos = LocalPlayer():GetPos()
+	
 
-	if espradius != 0 then
-		for k, v in pairs(ents.FindInSphere(LocalPlayer():GetPos(), espradius)) do
-			sortents(v)
-		end
-	else
-		for k, v in pairs(ents.GetAll()) do
+	for k, v in pairs(ents.GetAll()) do
+		if playerpos:Distance(v:GetPos()) <= espradius or espradius == 0 then
 			sortents(v)
 		end
 	end
+
 end)
 
 concommand.Add("lenny_printadmins", function()
 	local plys = player.GetAll()
 	for k, v in pairs(plys) do
 		if v:GetNWString("usergroup") != "user" then
-			print(v:GetName() .. string.rep("\t", math.Round(8 / #v:GetName())), v:GetNWString("usergroup"))
+			print(v:GetName(), v:GetNWString("usergroup"))
 		end
 	end
 end)
@@ -279,35 +276,64 @@ end)
 
 
 -- fuck vectors now.
-local function realboxesp(min, max, diff, ply)
+local function realboxesp(min, max, diff, ply, special)
 	cam.Start3D()
+	
+		--quad bottom
+		local mat
+		local teamcolorvector
+		local teamcolor
+		if ply:IsPlayer() then
+			if not GAMEMODE or not GAMEMODE.Name or not string.find(GAMEMODE.Name , "Trouble in Terror") or not ply:IsTraitor() then
+				teamcolorvector = Vector(team.GetColor(ply:Team()).r/255, team.GetColor(ply:Team()).g/255, team.GetColor(ply:Team()).b/255)
+				teamcolor = team.GetColor(ply:Team())	
+			else
+				teamcolorvector = Vector(1,0,0)
+				teamcolor = Color(255,0,0)
+			end
+			mat = Material('models/debug/debugwhite')
+			mat:SetVector("$color",teamcolorvector)
+			mat:SetFloat("$alpha",0.8)
+			render.SuppressEngineLighting(true)
+			render.SetMaterial(mat)
+			render.DrawQuadEasy(ply:GetPos(),Vector(0,0,1),diff.y,diff.x,Color(255,255,0),0)
+			render.DrawQuadEasy(ply:GetPos(),Vector(0,0,-1),diff.y,diff.x,Color(255,255,0),0)
+			render.SuppressEngineLighting(false)
+		else
+			teamcolor = Color(255,255,255)
+			render.DrawLine( min, min+Vector(diff.x,0,0) , Color(0,255,0) )
+			render.DrawLine( min, min+Vector(0,diff.y,0) , Color(0,255,0) )
+			render.DrawLine( min+Vector(diff.x, diff.y,0), min+Vector(diff.x,0,0) , Color(0,255,0) )
+			render.DrawLine( min+Vector(diff.x, diff.y,0), min+Vector(0,diff.y,0) , Color(0,255,0) )
+		end
 	
 		--vertical lines
 
-		render.DrawLine( min, min+Vector(0,0,diff.z), Color(0,0,255) )
-		render.DrawLine( min+Vector(diff.x,0,0), min+Vector(diff.x,0,diff.z), Color(0,0,255) )
-		render.DrawLine( min+Vector(0,diff.y,0), min+Vector(0,diff.y,diff.z), Color(0,0,255) )
-		render.DrawLine( min+Vector(diff.x,diff.y,0), min+Vector(diff.x,diff.y,diff.z), Color(0,0,255) )
+		render.DrawLine( min, min+Vector(0,0,diff.z), teamcolor )
+		render.DrawLine( min+Vector(diff.x,0,0), min+Vector(diff.x,0,diff.z), teamcolor )
+		render.DrawLine( min+Vector(0,diff.y,0), min+Vector(0,diff.y,diff.z), teamcolor )
+		render.DrawLine( min+Vector(diff.x,diff.y,0), min+Vector(diff.x,diff.y,diff.z), teamcolor)
 
 		--horizontal lines top
-		render.DrawLine( max, max-Vector(diff.x,0,0) , Color(0,0,255) )
-		render.DrawLine( max, max-Vector(0,diff.y,0) , Color(0,0,255) )
-		render.DrawLine( max-Vector(diff.x, diff.y,0), max-Vector(diff.x,0,0) , Color(0,0,255) )
-		render.DrawLine( max-Vector(diff.x, diff.y,0), max-Vector(0,diff.y,0) , Color(0,0,255) )
-
-		--horizontal lines bottom
-		render.DrawLine( min, min+Vector(diff.x,0,0) , Color(0,255,0) )
-		render.DrawLine( min, min+Vector(0,diff.y,0) , Color(0,255,0) )
-		render.DrawLine( min+Vector(diff.x, diff.y,0), min+Vector(diff.x,0,0) , Color(0,255,0) )
-		render.DrawLine( min+Vector(diff.x, diff.y,0), min+Vector(0,diff.y,0) , Color(0,255,0) )
-
+		render.DrawLine( max, max-Vector(diff.x,0,0) , teamcolor )
+		render.DrawLine( max, max-Vector(0,diff.y,0) , teamcolor )
+		render.DrawLine( max-Vector(diff.x, diff.y,0), max-Vector(diff.x,0,0) , teamcolor )
+		render.DrawLine( max-Vector(diff.x, diff.y,0), max-Vector(0,diff.y,0) , teamcolor )
 	
 	if GetConVarNumber("lenny_esp_view") == 1 then
 		local shootpos = ply:IsPlayer() and ply:GetShootPos() or 0
 		local eyetrace = ply:IsPlayer() and ply:GetEyeTrace().HitPos or 0
 
 		if (shootpos != 0 and eyetrace != 0) then
-		render.DrawBeam(shootpos, eyetrace,2,1,1, team.GetColor(ply:Team()))
+			mat = Material('models/wireframe')
+			mat:SetVector("$color",teamcolorvector)
+			render.SetMaterial(mat)	
+			if not GAMEMODE or not GAMEMODE.Name or not string.find(GAMEMODE.Name , "Trouble in Terror") or not ply:IsTraitor() then
+				render.DrawBeam(shootpos, eyetrace,2,1,1, team.GetColor(ply:Team()))
+			else
+				render.DrawBeam(shootpos, eyetrace,2,1,1, Color(255,0,0))
+			end
+			
 		end
 	end
 		
@@ -337,7 +363,7 @@ local function esp()
 			local min, max = v:WorldSpaceAABB()
 			local diff = max-min
 			local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
-			realboxesp(min, max, diff, v)
+			realboxesp(min, max, diff, v, false)
 			drawesptext("[NoN-AnonP]", pos.x, pos.y-20, Color(0, 255, 255, 255 - calctextopactity(v)))
 			--draw.DrawText("[Friend]"..v:GetName(), "Default", pos.x, pos.y-10, Color(0,255,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
 		end
@@ -346,9 +372,9 @@ local function esp()
 		if v:IsValid() then
 			local min, max = v:WorldSpaceAABB()
 			local diff = max-min
-			realboxesp(min, max, diff, v)
+			realboxesp(min, max, diff, v, false)
 			local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
-			drawesptext("[NPC]"..v:GetClass(), pos.x, pos.y-10, Color(255,0,0,255 - calctextopactity(v)))
+			drawesptext("[NPC]"..v:GetClass(), pos.x, pos.y-10, Color(0,255,0,255 - calctextopactity(v)))
 			--draw.DrawText("[NPC]" ..v:GetClass(), "Default", pos.x, pos.y-10, Color(255,0,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
 		end
 	end
@@ -357,8 +383,8 @@ local function esp()
 			local min, max = v:WorldSpaceAABB()
 			local diff = max-min
 			local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
-			realboxesp(min, max, diff, v)
-			drawesptext(v:GetName(), pos.x, pos.y-10, Color(255, 255,0,255 - calctextopactity(v)))
+			realboxesp(min, max, diff, v, false)
+			drawesptext(v:GetName(), pos.x, pos.y-10,  Color(255, 255,0,255 - calctextopactity(v)))
 			--draw.DrawText(v:GetName(), "Default", pos.x, pos.y-10, Color(255, 255,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
 		end
 	end
@@ -367,8 +393,9 @@ local function esp()
 			local min, max = v:WorldSpaceAABB()
 			local diff = max-min
 			local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
-			realboxesp(min, max, diff, v)
-			drawesptext("["..v:GetNWString("usergroup").."]"..v:GetName(), pos.x, pos.y-10, Color(255, 0, 255,255 -calctextopactity(v)))
+			realboxesp(min, max, diff, v, true)
+			drawesptext("["..v:GetNWString("usergroup").."]", pos.x, pos.y-20, Color(255, 0,0,255 - calctextopactity(v)))
+			drawesptext(v:GetName(), pos.x, pos.y-10, Color(255, 255,0,255 - calctextopactity(v)))
 			--draw.DrawText("[Admin]"..v:GetName(), "Default", pos.x, pos.y-10, Color(255,0,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
 		end
 	end
@@ -388,7 +415,7 @@ local function esp()
 				local min, max = v:WorldSpaceAABB()
 				local diff = max-min
 				local pos = (min+Vector(diff.x*.5, diff.y*.5,diff.z)):ToScreen()
-				realboxesp(min, max, diff, v)
+				realboxesp(min, max, diff, v, false)
 				drawesptext(v:GetClass(), pos.x, pos.y-10, Color(0 ,255, 0,255 - calctextopactity(v)))
 				--draw.DrawText(v:GetClass(), "Default", pos.x, pos.y-10, Color(0,255,0,255 - calctextopactity(v:GetPos():Distance(LocalPlayer():GetPos()))), 1)
 				if v:GetClass() == "spawned_money" then
