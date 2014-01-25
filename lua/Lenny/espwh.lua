@@ -14,7 +14,7 @@ Credit to the author must be given when using/sharing this work or derivative wo
 CreateClientConVar("lenny_wh_radius", 750)
 CreateClientConVar("lenny_wh", 0)
 CreateClientConVar("lenny_wh_type",0)
--CreateClientConVar("lenny_wh_noprops", 0)
+CreateClientConVar("lenny_wh_noprops", 0)
 
 local radius = GetConVarNumber("lenny_wh_radius")
 local whtype = GetConVarNumber("lenny_wh_type")
